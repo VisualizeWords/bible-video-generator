@@ -2,72 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bible Story Video Generator</title>
+  <title>Bible Story Visualizer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
       max-width: 600px;
       margin: auto;
+      text-align: center;
     }
+
     textarea {
       width: 100%;
-      height: 120px;
+      height: 100px;
       margin-bottom: 10px;
       padding: 10px;
       font-size: 16px;
     }
+
     button {
       padding: 10px 20px;
       font-size: 16px;
       margin-bottom: 15px;
     }
-    video {
+
+    .video-box {
       width: 100%;
+      height: 300px;
+      overflow: hidden;
       margin-top: 15px;
+      position: relative;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .fake-video {
+      width: 100%;
+      height: auto;
+      animation: zoomIn 10s ease-in-out forwards;
+    }
+
+    @keyframes zoomIn {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.2);
+      }
+    }
+
+    #downloadLink {
       display: none;
+      margin-top: 10px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h2>Bible Story to Video</h2>
-  <textarea id="storyInput" placeholder="Enter Bible story here..."></textarea>
-  <button onclick="generateVideo()">Generate Video</button>
-  <div id="status"></div>
-  <video id="videoPlayer" controls></video>
-  <a id="downloadLink" href="#" download="bible-story.mp4" style="display:none;">Download Video</a>
+  <h2>Bible Story Visualizer</h2>
+  <textarea id="storyInput" placeholder="Enter Bible story text..."></textarea>
+  <br>
+  <button onclick="simulateVideo()">Generate Visual</button>
+  <div class="video-box" id="videoBox" style="display:none;">
+    <img id="fakeVideo" class="fake-video" src="" alt="Bible Scene">
+  </div>
+  <a id="downloadLink" href="#" download="bible-scene.jpg">Download Image</a>
 
   <script>
-    async function generateVideo() {
+    function simulateVideo() {
       const story = document.getElementById('storyInput').value;
-      const status = document.getElementById('status');
-      const videoPlayer = document.getElementById('videoPlayer');
+      const fakeVideo = document.getElementById('fakeVideo');
+      const videoBox = document.getElementById('videoBox');
       const downloadLink = document.getElementById('downloadLink');
 
-      if (!story) {
+      if (!story.trim()) {
         alert("Please enter a Bible story.");
         return;
       }
 
-      status.textContent = "Generating video... please wait.";
-      videoPlayer.style.display = "none";
-      downloadLink.style.display = "none";
+      // Use a static placeholder image for now
+      const placeholderImage = "https://images.unsplash.com/photo-1601758173925-8d4805bdfb65"; // Replace later
 
-      try {
-        // Replace with real API when available
-        const fakeVideoUrl = "https://www.w3schools.com/html/mov_bbb.mp4"; // sample video
-        await new Promise(r => setTimeout(r, 2000)); // simulate processing
-
-        videoPlayer.src = fakeVideoUrl;
-        videoPlayer.style.display = "block";
-
-        downloadLink.href = fakeVideoUrl;
-        downloadLink.style.display = "inline-block";
-        status.textContent = "Video ready!";
-      } catch (err) {
-        status.textContent = "Failed to generate video.";
-        console.error(err);
-      }
+      fakeVideo.src = placeholderImage;
+      videoBox.style.display = "block";
+      downloadLink.href = placeholderImage;
+      downloadLink.style.display = "inline-block";
     }
   </script>
 </body>
