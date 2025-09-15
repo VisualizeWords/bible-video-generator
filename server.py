@@ -1,55 +1,64 @@
-import requests
-from flask import Flask, request, send_file, jsonify
+import os
+from flask import Flask, request, jsonify, send_file
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# 🔴 IMPORTANT: Update this with your Colab ngrok URL each time you restart Colab
-COLAB_API_URL = "https://xxxx.ngrok-free.app/generate"
+UPLOAD_FOLDER = "uploads"
+OUTPUT_FOLDER = "videos"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 @app.route("/")
 def home():
-    return """
-    <h2>Bible Story Video Generator</h2>
+    return "✅ Bible Video Generator is running on Render with Flask + Gunicorn!"
 
-    <h3>Text Prompt → Video</h3>
-    <form action="/generate-text" method="post">
-        <input type="text" name="prompt" placeholder="Bible story prompt" required>
-        <button type="submit">Generate</button>
-    </form>
+# 1. Upload image + description = video (simulated)
+@app.route("/generate_from_image", methods=["POST"])
+def generate_from_image():
+    if "image" not in request.files or "description" not in request.form:
+        return jsonify({"error": "Please upload an image and description"}), 400
 
-    <h3>Image + Description → Video</h3>
-    <form action="/generate-image" method="post" enctype="multipart/form-data">
-        <input type="text" name="description" placeholder="Describe the story" required><br><br>
-        <input type="file" name="image" required><br><br>
-        <button type="submit">Generate</button>
-    </form>
-    """
+    image = request.files["image"]
+    description = request.form["description"]
 
-@app.route("/generate-text", methods=["POST"])
-def generate_text():
-    prompt = request.form.get("prompt")
-    response = requests.post(COLAB_API_URL, data={"mode": "text", "prompt": prompt}, stream=True)
+    filename = secure_filename(image.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    image.save(filepath)
 
-    if response.status_code == 200:
-        video_file = "bible_text_video.mp4"
-        with open(video_file, "wb") as f:
-            for chunk in response.iter_content(8192):
-                f.write(chunk)
-        return send_file(video_file, as_attachment=True)
-    return jsonify({"error": "Failed to generate text video"}), 500
+    # Simulate video generation (create dummy video file)
+    output_video = os.path.join(OUTPUT_FOLDER, f"{filename}.mp4")
+    with open(output_video, "wb") as f:
+        f.write(b"Fake video content for image + description: " + description.encode())
 
-@app.route("/generate-image", methods=["POST"])
-def generate_image():
-    description = request.form.get("description")
-    response = requests.post(COLAB_API_URL, data={"mode": "image", "description": description}, stream=True)
+    return jsonify({
+        "message": "Video generated successfully!",
+        "download_url": f"/download/{filename}.mp4"
+    })
 
-    if response.status_code == 200:
-        video_file = "bible_image_video.mp4"
-        with open(video_file, "wb") as f:
-            for chunk in response.iter_content(8192):
-                f.write(chunk)
-        return send_file(video_file, as_attachment=True)
-    return jsonify({"error": "Failed to generate image video"}), 500
+# 2. Text prompt = video (simulated)
+@app.route("/generate_from_text", methods=["POST"])
+def generate_from_text():
+    data = request.json
+    if not data or "prompt" not in data:
+        return jsonify({"error": "Please provide a text prompt"}), 400
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    prompt = data["prompt"]
+
+    # Simulate video generation (create dummy video file)
+    output_video = os.path.join(OUTPUT_FOLDER, f"text_prompt.mp4")
+    with open(output_video, "wb") as f:
+        f.write(b"Fake video content for prompt: " + prompt.encode())
+
+    return jsonify({
+        "message": "Video generated successfully!",
+        "download_url": "/download/text_prompt.mp4"
+    })
+
+# 3. Download endpoint
+@app.route("/download/<filename>")
+def download(filename):
+    filepath = os.path.join(OUTPUT_FOLDER, filename)
+    if os.path.exists(filepath):
+        return send_file(filepath, as_attachment=True)
+    return jsonify({"error": "File not found"}), 404
